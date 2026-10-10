@@ -6,6 +6,8 @@ import LessonNav from '../components/LessonNav'
 import Button from '../components/Button'
 import LinearRegressionDemo from '../demos/LinearRegressionDemo'
 import KMeansDemo from '../demos/KMeansDemo'
+import PolynomialOverfittingDemo from '../demos/PolynomialOverfittingDemo'
+import LogisticThresholdDemo from '../demos/LogisticThresholdDemo'
 import { useProgress } from '../lib/progress'
 import NotFound from '../components/NotFound'
 
@@ -226,12 +228,22 @@ export default function Lesson() {
             ))}
           </div>
 
-          {course.demo === 'linear-regression' && lesson.id === 'gradient-descent' && (
+          {lesson.demo === 'linear-regression' && (
             <div className="mt-10">
               <LinearRegressionDemo />
             </div>
           )}
-          {course.demo === 'kmeans' && lesson.id === 'choose-k' && (
+          {lesson.demo === 'polynomial-overfitting' && (
+            <div className="mt-10">
+              <PolynomialOverfittingDemo />
+            </div>
+          )}
+          {lesson.demo === 'logistic-threshold' && (
+            <div className="mt-10">
+              <LogisticThresholdDemo />
+            </div>
+          )}
+          {lesson.demo === 'kmeans' && (
             <div className="mt-10">
               <KMeansDemo />
             </div>

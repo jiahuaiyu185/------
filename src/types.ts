@@ -17,6 +17,8 @@ export interface Lesson {
   title: string
   intro: string
   sections: SectionBlock[]
+  /** 该小节末尾挂载的交互演示类型 */
+  demo?: DemoKind
 }
 
 export interface QuizQuestion {
@@ -27,7 +29,11 @@ export interface QuizQuestion {
   explanation: string
 }
 
-export type DemoKind = 'linear-regression' | 'kmeans'
+export type DemoKind =
+  | 'linear-regression'
+  | 'kmeans'
+  | 'polynomial-overfitting'
+  | 'logistic-threshold'
 
 export interface Course {
   id: string
@@ -37,7 +43,6 @@ export interface Course {
   description: string
   /** Tailwind 渐变类,用于课程卡片与图标底色 */
   gradient: string
-  demo?: DemoKind
   lessons: Lesson[]
   quiz: QuizQuestion[]
 }

@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router-dom'
 import { getCourse } from '../data/courses'
+import type { DemoKind } from '../types'
 import { useProgress } from '../lib/progress'
 import { completedLessonCount, isCourseCompleted } from '../lib/stats'
 import Card from '../components/Card'
@@ -7,6 +8,13 @@ import Button from '../components/Button'
 import Badge from '../components/Badge'
 import ProgressBar from '../components/ProgressBar'
 import NotFound from '../components/NotFound'
+
+const DEMO_DESC: Record<DemoKind, string> = {
+  'linear-regression': '你可以拖动滑块直观体验线性回归的拟合过程。',
+  'polynomial-overfitting': '你可以拖动滑块观察多项式次数与过拟合的关系。',
+  'logistic-threshold': '你可以拖动滑块观察阈值如何改变精确率与召回率。',
+  kmeans: '你可以逐步运行 K-means 算法观察聚类过程。',
+}
 
 export default function CourseDetail() {
   const { courseId } = useParams()
@@ -20,6 +28,7 @@ export default function CourseDetail() {
   const done = completedLessonCount(course, state)
   const completed = isCourseCompleted(course, state)
   const quiz = state.quizzes[course.id]
+  const demoLessons = course.lessons.filter((l) => l.demo)
   const pct = course.lessons.length
     ? Math.round((done / course.lessons.length) * 100)
     : 0
@@ -100,14 +109,14 @@ export default function CourseDetail() {
         )}
       </div>
 
-      {course.demo && (
+      {demoLessons.length > 0 && (
         <Card className="mt-8 p-5">
           <p className="font-medium text-slate-800">✨ 本章含交互演示</p>
-          <p className="mt-1 text-sm text-slate-600">
-            {course.demo === 'linear-regression'
-              ? '在「梯度下降」一节的末尾,你可以拖动滑块直观体验线性回归的拟合过程。'
-              : '在「选择 K 值与局限」一节的末尾,你可以逐步运行 K-means 算法观察聚类过程。'}
-          </p>
+          <ul className="mt-2 space-y-1 text-sm text-slate-600">
+            {demoLessons.map((l) => (
+              <li key={l.id}>在「{l.title}」一节的末尾,{DEMO_DESC[l.demo!]}</li>
+            ))}
+          </ul>
         </Card>
       )}
     </div>

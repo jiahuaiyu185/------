@@ -580,7 +580,6 @@ print("学习时间与成绩的相关系数:", corr)`,
     description:
       '最经典的机器学习模型之一。理解直线 ŷ = w·x + b、均方误差,以及梯度下降如何找到最优参数。',
     gradient: 'from-blue-600 to-violet-600',
-    demo: 'linear-regression',
     lessons: [
       {
         id: 'line-to-predict',
@@ -642,6 +641,7 @@ print("学习时间与成绩的相关系数:", corr)`,
         id: 'gradient-descent',
         title: '梯度下降',
         intro: '让计算机自动找到最优的 w 和 b。',
+        demo: 'linear-regression',
         sections: [
           {
             type: 'paragraph',
@@ -674,6 +674,7 @@ print("学习时间与成绩的相关系数:", corr)`,
         id: 'polynomial-overfitting',
         title: '多项式回归与过拟合',
         intro: '直线不够用怎么办?次数越高的曲线越灵活,也越容易"背答案"。',
+        demo: 'polynomial-overfitting',
         sections: [
           {
             type: 'objectives',
@@ -928,6 +929,104 @@ for degree in [1, 2, 3, 5, 9]:
           },
         ],
       },
+      {
+        id: 'threshold',
+        title: '混淆矩阵与阈值',
+        intro:
+          '模型先算出"通过概率",再按阈值切一刀分成两类;换一个阈值,精确率和召回率会此消彼长。',
+        demo: 'logistic-threshold',
+        sections: [
+          {
+            type: 'objectives',
+            items: [
+              '理解 predict() 与 predict_proba() 的区别',
+              '理解阈值如何把概率变成类别',
+              '了解调整阈值对精确率、召回率的影响',
+            ],
+          },
+          {
+            type: 'paragraph',
+            text: 'predict() 看起来只吐出一个 0 或 1,其实它内部做了两步:先用 predict_proba() 算出"通过概率",再拿 0.5 作分界——概率 ≥ 0.5 判为 1,否则判为 0。',
+          },
+          {
+            type: 'paragraph',
+            text: '0.5 是默认阈值,但并不是唯一的答案。把阈值调低(比如 0.25),模型会更容易判"通过",于是找到更多真正通过的人(召回率上升),但也会把更多没通过的人误判为通过(精确率下降);调高则相反。',
+          },
+          {
+            type: 'code',
+            caption: '示例:拿到概率后,自定义阈值来划分类别',
+            text: `import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    precision_score, recall_score, f1_score, confusion_matrix,
+)
+
+# 特征:第一列学习时间,第二列完成测试次数;标签:0 未通过,1 通过
+X = np.array([
+    [0.5, 0], [1.0, 0], [1.0, 1], [1.5, 0],
+    [1.5, 1], [2.0, 0], [2.0, 1], [2.5, 1],
+    [2.5, 2], [3.0, 1], [3.0, 2], [3.5, 1],
+    [3.5, 2], [4.0, 2], [4.0, 3], [4.5, 2],
+    [4.5, 3], [5.0, 3], [5.5, 3], [6.0, 4],
+])
+y = np.array([0, 0, 0, 0, 0, 0, 0, 1, 0, 1,
+              1, 0, 1, 1, 1, 1, 1, 1, 1, 1])
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=1, stratify=y
+)
+
+model = LogisticRegression()
+model.fit(X_train, y_train)
+
+# predict() 默认按 0.5 阈值划分;这里换成 0.25
+probability = model.predict_proba(X_test)[:, 1]
+
+threshold = 0.25
+pred_025 = (probability >= threshold).astype(int)
+
+print("真实类别:", y_test)
+print("预测类别(阈值 0.25):", pred_025)
+print("混淆矩阵(阈值 0.25):")
+print(confusion_matrix(y_test, pred_025))
+print(f"精确率: {precision_score(y_test, pred_025):.2%}")
+print(f"召回率: {recall_score(y_test, pred_025):.2%}")
+print(f"F1: {f1_score(y_test, pred_025):.2%}")`,
+          },
+          {
+            type: 'output',
+            text: `真实类别: [1 0 0 1 1 0]
+预测类别(阈值 0.25): [1 1 0 1 1 1]
+混淆矩阵(阈值 0.25):
+[[1 2]
+ [0 3]]
+精确率: 60.00%
+召回率: 100.00%
+F1: 75.00%`,
+          },
+          {
+            type: 'paragraph',
+            text: '如果沿用默认的 0.5 阈值,这套数据划分的精确率和召回率都是 67%;阈值降到 0.25 后,召回率冲到 100%——所有真正通过的人都被找到了,但精确率掉到 60%,把两个没通过的人也误判成了通过。',
+          },
+          {
+            type: 'note',
+            text: '以上是示意输出,具体数字随随机划分变化;重点是看懂"调阈值 → 精确率与召回率此消彼长"这个规律。',
+          },
+          {
+            type: 'commonMistakes',
+            items: [
+              '以为阈值永远必须是 0.5:0.5 只是 sklearn 的默认值,业务需要时可以换。',
+              '把 predict_proba 返回的概率直接当类别用:概率是 0~1 的连续值,还要按阈值切一刀才变成 0/1。',
+              '只盯着一个指标看:调低阈值后精确率下降是召回率上升的必然代价,要结合业务权衡。',
+            ],
+          },
+          {
+            type: 'summary',
+            text: '阈值是"概率变类别"的分界刀,默认 0.5;调低阈值会更"宽松"(召回率升、精确率降),调高则更"严格"(相反)。混淆矩阵与精确率/召回率的读法已在「模型评估与选择」课程讲过。',
+          },
+        ],
+      },
     ],
     quiz: [
       {
@@ -957,6 +1056,39 @@ for degree in [1, 2, 3, 5, 9]:
         options: ['σ(z) = 1', 'w·x + b = 0', 'MSE 最小', '学习率 α = 0'],
         answerIndex: 1,
         explanation: '当 w·x+b = 0 时 σ = 0.5,正好处于两类的分界,这就是决策边界。',
+      },
+      {
+        id: 'logistic-q5',
+        question: '逻辑回归的 predict() 内部默认用哪个概率阈值判定为正类?',
+        options: ['0.25', '0.5', '0.75', '1.0'],
+        answerIndex: 1,
+        explanation: 'predict() 先算概率,再按 0.5 分界:概率 ≥ 0.5 判为 1。',
+      },
+      {
+        id: 'logistic-q6',
+        question: '把阈值从 0.5 调低到 0.25,一般会发生什么?',
+        options: [
+          '预测出更多正类,召回率上升、精确率下降',
+          '预测出更少正类,召回率下降、精确率上升',
+          '召回率和精确率都上升',
+          '模型不再需要训练',
+        ],
+        answerIndex: 0,
+        explanation:
+          '阈值调低让模型更容易判"通过",于是找到更多真正通过的人(召回率升),但也误判更多(精确率降)。',
+      },
+      {
+        id: 'logistic-q7',
+        question: 'predict_proba(X)[:, 1] 返回的是什么?',
+        options: [
+          '每个样本预测的类别标签',
+          '每个样本属于正类(通过)的概率',
+          '每个样本的特征值',
+          '模型的权重参数',
+        ],
+        answerIndex: 1,
+        explanation:
+          'predict_proba 返回每个样本属于各类的概率,第二列 [:, 1] 是"正类(通过)"的概率。',
       },
     ],
   },
@@ -1039,6 +1171,105 @@ for degree in [1, 2, 3, 5, 9]:
           },
         ],
       },
+      {
+        id: 'tree-rules',
+        title: '决策规则与特征重要性',
+        intro: '把训练好的树"翻译"成一条条规则,再看每个特征贡献了多少。',
+        sections: [
+          {
+            type: 'objectives',
+            items: [
+              '会用 export_text 把决策树输出成可读规则',
+              '理解 max_depth 与过拟合的关系',
+              '会读 feature_importances_ 特征重要性',
+            ],
+          },
+          {
+            type: 'paragraph',
+            text: '决策树最大的优点是可解释。sklearn 的 export_text 能把训练好的树"翻译"成一条条 if-then 规则,直接看到模型是怎么做判断的。',
+          },
+          {
+            type: 'paragraph',
+            text: '把树的深度 max_depth 从 1 一路加大,训练准确率会越来越高,但测试准确率往往先升后降——这就是过拟合最直观的证据:树太深,就开始"背答案"而不是找规律。',
+          },
+          {
+            type: 'code',
+            caption: '示例:对比不同深度,并输出规则与特征重要性',
+            text: `import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier, export_text
+from sklearn.metrics import accuracy_score
+
+# 特征:第一列学习时间,第二列完成测试次数;标签:0 未通过,1 通过
+X = np.array([
+    [0.5, 0], [1.0, 0], [1.0, 1], [1.5, 0],
+    [1.5, 1], [2.0, 0], [2.0, 1], [2.5, 1],
+    [2.5, 2], [3.0, 1], [3.0, 2], [3.5, 1],
+    [3.5, 2], [4.0, 2], [4.0, 3], [4.5, 2],
+    [4.5, 3], [5.0, 3], [5.5, 3], [6.0, 4],
+])
+y = np.array([0, 0, 0, 0, 0, 0, 0, 1, 0, 1,
+              1, 0, 1, 1, 1, 1, 1, 1, 1, 1])
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=1, stratify=y
+)
+
+# 依次试 1 / 2 / 3 层深度,对比训练与测试准确率
+for depth in [1, 2, 3]:
+    model = DecisionTreeClassifier(max_depth=depth, random_state=42)
+    model.fit(X_train, y_train)
+    train_acc = accuracy_score(y_train, model.predict(X_train))
+    test_acc = accuracy_score(y_test, model.predict(X_test))
+    print(f"max_depth={depth}  训练准确率 {train_acc:.2%}  测试准确率 {test_acc:.2%}")
+
+# 把最后一棵树转成可读规则
+rules = export_text(model, feature_names=['hours', 'practice'])
+print("决策规则:")
+print(rules)
+
+# 每个特征对决策的贡献
+print("特征重要性:", model.feature_importances_)`,
+          },
+          {
+            type: 'output',
+            text: `max_depth=1  训练准确率 70.00%  测试准确率 66.67%
+max_depth=2  训练准确率 85.71%  测试准确率 83.33%
+max_depth=3  训练准确率 100.00%  测试准确率 66.67%
+
+决策规则:
+|--- hours <= 2.50
+|   |--- class: 0
+|--- hours >  2.50
+|   |--- hours <= 3.75
+|   |   |--- class: 0
+|   |--- hours >  3.75
+|   |   |--- class: 1
+
+特征重要性: [0.7 0.3]`,
+          },
+          {
+            type: 'paragraph',
+            text: '可以看到,深度到 3 时训练准确率已经 100%,但测试准确率反而掉回 66.67%——树在训练集上"背"得太死。特征重要性 [0.7, 0.3] 说明"学习时间"比"完成测试次数"对判断帮助更大。',
+          },
+          {
+            type: 'note',
+            text: '以上是示意输出,具体数字与规则随随机划分变化;重点关注深度、准确率、规则三者之间的关系。',
+          },
+          {
+            type: 'commonMistakes',
+            items: [
+              '只看训练准确率:训练集上几乎满分往往意味着过拟合,要同时看测试集。',
+              '把"特征重要性高"当成"因果关系":重要性只表示这个特征对模型的预测有用,不等于现实中的因果。',
+              '以为 max_depth 越大越好:深度过大反而让测试表现变差。',
+            ],
+          },
+          {
+            type: 'summary',
+            text: 'export_text 把决策树转成可读规则;扫描 max_depth 能直观看到过拟合;feature_importances_ 给出每个特征对预测的贡献大小。',
+          },
+        ],
+      },
     ],
     quiz: [
       {
@@ -1083,6 +1314,44 @@ for degree in [1, 2, 3, 5, 9]:
         ],
         answerIndex: 1,
         explanation: '通过剪枝、限制深度等方式控制树的复杂度,可以缓解过拟合。',
+      },
+      {
+        id: 'tree-q5',
+        question: 'sklearn 中 export_text 的作用是?',
+        options: [
+          '把决策树转成可读的 if-then 规则',
+          '导出训练数据集',
+          '计算模型准确率',
+          '保存模型到磁盘',
+        ],
+        answerIndex: 0,
+        explanation: 'export_text 把训练好的决策树翻译成人类可读的分支规则。',
+      },
+      {
+        id: 'tree-q6',
+        question: '决策树的 feature_importances_ 表示什么?',
+        options: [
+          '每个样本的类别',
+          '每个特征对预测的贡献大小',
+          '树的深度',
+          '训练数据的大小',
+        ],
+        answerIndex: 1,
+        explanation:
+          'feature_importances_ 给出每个特征对决策的贡献(重要性),数值越大越重要。',
+      },
+      {
+        id: 'tree-q7',
+        question: '决策树的深度 max_depth 不断增大时,通常会发生什么?',
+        options: [
+          '训练准确率升高,测试准确率可能先升后降',
+          '训练和测试准确率都一直升高',
+          '训练准确率下降',
+          '对结果没有任何影响',
+        ],
+        answerIndex: 0,
+        explanation:
+          '树越深越能"记住"训练集,训练准确率一路升;但过深会导致过拟合,测试准确率反而下降。',
       },
     ],
   },
@@ -1411,6 +1680,202 @@ for degree in [1, 2, 3, 5, 9]:
     ],
   },
   {
+    id: 'random-forest',
+    title: '随机森林与集成学习',
+    icon: '🌲',
+    tagline: '多棵树一起投票,比一棵树更稳',
+    description:
+      '一棵决策树容易"背答案";随机森林用许多棵树投票,让预测更稳定、更可靠。',
+    gradient: 'from-emerald-500 to-teal-600',
+    lessons: [
+      {
+        id: 'ensemble-idea',
+        title: '集成学习思想',
+        intro: '为什么"很多个模型一起投票"比单个模型更靠谱?',
+        sections: [
+          {
+            type: 'objectives',
+            items: [
+              '理解"多个模型投票"的集成思想',
+              '知道一棵决策树为什么容易不稳定',
+              '理解随机森林的两个"随机"',
+            ],
+          },
+          {
+            type: 'paragraph',
+            text: '集成学习的思想很朴素:单个模型容易出错、容易"背答案",那就训练很多个模型,让它们投票表决,多数意见作为最终答案。就像一群人的集体判断,往往比一个人拍板更稳妥。',
+          },
+          {
+            type: 'example',
+            title: '一棵树为什么不稳',
+            text: '决策树对数据很敏感:训练数据稍微变一点,整棵树的分支就可能大不一样,预测也随之波动。多训练几棵"稍微不一样"的树再投票,就能把这种波动平均掉。',
+          },
+          {
+            type: 'paragraph',
+            text: '随机森林的"随机"体现在两处:一是每棵树只看"随机抽取的一部分样本"(有放回抽样),二是每次分裂只从"随机挑选的一部分特征"里选。这两个随机让各棵树彼此不同,投票起来才有效。',
+          },
+          {
+            type: 'summary',
+            text: '集成学习靠"多模型投票"降低单个模型的波动;随机森林通过随机抽样本、随机选特征,得到一群差异化的决策树。',
+          },
+        ],
+      },
+      {
+        id: 'random-forest-practice',
+        title: '随机森林实战',
+        intro: '用交叉验证对比决策树与随机森林,并读特征重要性。',
+        sections: [
+          {
+            type: 'objectives',
+            items: [
+              '会用交叉验证对比决策树与随机森林',
+              '会读随机森林的特征重要性',
+              '会用随机森林预测新样本并输出概率',
+            ],
+          },
+          {
+            type: 'paragraph',
+            text: '随机森林的 n_estimators 是"树的数量",max_depth 控制每棵树的深度。下面用 5 折分层交叉验证,公平地对比"深度 3 的单棵决策树"和"100 棵树的随机森林"。',
+          },
+          {
+            type: 'code',
+            caption: '示例:交叉验证对比决策树与随机森林',
+            text: `import numpy as np
+from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+
+# 特征:第一列学习时间,第二列完成测试次数;标签:0 未通过,1 通过
+X = np.array([
+    [0.5, 0], [1.0, 0], [1.0, 1], [1.5, 0],
+    [1.5, 1], [2.0, 0], [2.0, 1], [2.5, 1],
+    [2.5, 2], [3.0, 1], [3.0, 2], [3.5, 1],
+    [3.5, 2], [4.0, 2], [4.0, 3], [4.5, 2],
+    [4.5, 3], [5.0, 3], [5.5, 3], [6.0, 4],
+])
+y = np.array([0, 0, 0, 0, 0, 0, 0, 1, 0, 1,
+              1, 0, 1, 1, 1, 1, 1, 1, 1, 1])
+
+# 5 折分层交叉验证:保证每折里"通过/不通过"比例一致
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+
+models = {
+    '深度3的决策树': DecisionTreeClassifier(
+        max_depth=3, random_state=42
+    ),
+    '随机森林': RandomForestClassifier(
+        n_estimators=100, max_depth=3, random_state=42
+    ),
+}
+
+for name, model in models.items():
+    scores = cross_val_score(model, X, y, cv=cv, scoring='accuracy')
+    print(name)
+    print('每折准确率:', np.round(scores, 2))
+    print(f"平均准确率: {scores.mean():.2%}  标准差: {scores.std():.2%}")
+
+# 用随机森林看特征重要性并预测新样本
+forest = RandomForestClassifier(n_estimators=100, max_depth=3, random_state=42)
+forest.fit(X, y)
+print('特征重要性:', forest.feature_importances_)
+
+new_student = np.array([[2.8, 1]])
+pred = forest.predict(new_student)
+prob = forest.predict_proba(new_student)[0, 1]
+print('预测类型:', pred)
+print(f"通过概率: {prob:.2%}")`,
+          },
+          {
+            type: 'output',
+            text: `深度3的决策树
+每折准确率: [0.75 0.75 1.   0.75 1.  ]
+平均准确率: 85.00%  标准差: 12.25%
+随机森林
+每折准确率: [0.75 0.75 1.   1.   1.  ]
+平均准确率: 90.00%  标准差: 12.25%
+
+特征重要性: [0.73 0.27]
+预测类型: [1]
+通过概率: 78.00%`,
+          },
+          {
+            type: 'paragraph',
+            text: '随机森林的平均准确率略高于单棵决策树。特征重要性 [0.73, 0.27] 同样说明"学习时间"更重要;对新样本(学习 2.8 小时、测过 1 次)预测为"通过",概率 78%。',
+          },
+          {
+            type: 'note',
+            text: '以上是示意输出,具体数字随随机划分变化;随机森林不保证一定比单棵树好——样本很少或树太少时,两者差别可能不大。',
+          },
+          {
+            type: 'commonMistakes',
+            items: [
+              '以为森林一定比单棵树好:样本太少或树的数量太少时,优势可能不明显。',
+              '把 n_estimators(树的数量)当成树的深度:前者控制"有多少棵",后者才控制"每棵多深"。',
+              '忽略可解释性的下降:随机森林比单棵决策树更"黑箱",更难像 export_text 那样直接读出规则。',
+            ],
+          },
+          {
+            type: 'summary',
+            text: '随机森林 = 多棵决策树 + 随机抽样本 + 随机选特征,最后投票;它通常比单棵树更稳、更不易过拟合,但可解释性下降。',
+          },
+        ],
+      },
+    ],
+    quiz: [
+      {
+        id: 'rf-q1',
+        question: '随机森林的"随机"主要体现在哪两个方面?',
+        options: [
+          '随机抽样本、随机选特征',
+          '随机设学习率、随机设深度',
+          '随机打乱标签、随机删除数据',
+          '随机初始化权重、随机优化器',
+        ],
+        answerIndex: 0,
+        explanation:
+          '每棵树看"随机抽的一部分样本",每次分裂从"随机挑的一部分特征"里选,两个随机让各棵树彼此不同。',
+      },
+      {
+        id: 'rf-q2',
+        question: '相比单棵决策树,随机森林的主要优势是什么?',
+        options: [
+          '更稳定、更不易过拟合',
+          '训练一定更快',
+          '一定得到更高准确率',
+          '更容易解释',
+        ],
+        answerIndex: 0,
+        explanation:
+          '多棵树投票能平均掉单棵树的波动,通常更稳定、更不易过拟合;但可解释性反而下降。',
+      },
+      {
+        id: 'rf-q3',
+        question: '随机森林的 n_estimators 参数控制什么?',
+        options: [
+          '每棵树的最大深度',
+          '森林中树的数量',
+          '学习率的大小',
+          '随机抽样的比例',
+        ],
+        answerIndex: 1,
+        explanation: 'n_estimators 是森林中决策树的数量;max_depth 才控制每棵树的深度。',
+      },
+      {
+        id: 'rf-q4',
+        question: '随机森林里多棵树对同一个样本给出不同结果时,最终怎么决定?',
+        options: [
+          '取第一棵树的结果',
+          '投票(多数表决)',
+          '取结果的平均概率里的最大值',
+          '随机挑一棵树的结果',
+        ],
+        answerIndex: 1,
+        explanation:
+          '分类任务里,随机森林让每棵树投票,得票最多的类别作为最终预测。',
+      },
+    ],
+  },
+  {
     id: 'kmeans',
     title: 'K-means 聚类',
     icon: '🫧',
@@ -1418,7 +1883,6 @@ for degree in [1, 2, 3, 5, 9]:
     description:
       '进入无监督学习。理解聚类思想与 K-means 的"分配—更新中心"迭代过程,以及如何选择 K 值。',
     gradient: 'from-purple-500 to-fuchsia-600',
-    demo: 'kmeans',
     lessons: [
       {
         id: 'unsupervised',
@@ -1477,6 +1941,7 @@ for degree in [1, 2, 3, 5, 9]:
         id: 'choose-k',
         title: '选择 K 值与局限',
         intro: 'K 选几?K-means 有哪些弱点?',
+        demo: 'kmeans',
         sections: [
           {
             type: 'paragraph',
