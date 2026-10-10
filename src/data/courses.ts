@@ -604,6 +604,38 @@ print("学习时间与成绩的相关系数:", corr)`,
             text: '假设 y 是房价(万元),x 是面积(㎡)。如果模型学到 w = 0.5、b = 30,那么一套 80㎡ 的房子预测价为 ŷ = 0.5 × 80 + 30 = 70 万元。',
           },
           {
+            type: 'paragraph',
+            text: '实际中不必手动猜 w 和 b。NumPy 的 polyfit 用最小二乘法,一步算出让误差平方和最小的直线。',
+          },
+          {
+            type: 'code',
+            caption: '示例:用 np.polyfit 自动拟合直线',
+            text: `import numpy as np
+
+hours = np.array([1.0, 2.0, 3.0, 5.0, 4.0])
+scores = np.array([52, 63, 76, 91, 60])
+
+# polyfit(x, y, 1):自动求出最优的 w 和 b
+w, b = np.polyfit(hours, scores, 1)
+print(f"自动找到的权重 w:{w:.2f}")
+print(f"自动找到的截距 b:{b:.2f}")
+
+# 用求出的直线预测新样本
+new_hour = 4.0
+predicted = w * new_hour + b
+print(f"学习 {new_hour} 小时的预测成绩:{predicted:.2f}")`,
+          },
+          {
+            type: 'output',
+            text: `自动找到的权重 w:7.50
+自动找到的截距 b:45.90
+学习 4.0 小时的预测成绩:75.90`,
+          },
+          {
+            type: 'paragraph',
+            text: 'polyfit 一步就算出了最优的 w ≈ 7.5、b ≈ 45.9,省去手动调参。但要理解它到底在"优化什么",还要看下一节的代价函数。',
+          },
+          {
             type: 'summary',
             text: '线性回归用直线 ŷ = w·x + b 拟合数据,预测连续数值;要学习的是 w 和 b。',
           },
@@ -630,6 +662,40 @@ print("学习时间与成绩的相关系数:", corr)`,
             type: 'example',
             title: '手算一个 MSE',
             text: '若两个数据点真实值为 y = [2, 4],直线预测为 ŷ = [1, 3],则 MSE = ((2−1)² + (4−3)²) / 2 = 1。',
+          },
+          {
+            type: 'paragraph',
+            text: '再拿一组真实数据,对比两组不同的 w、b,亲手算一遍 MSE——MSE 更小的一组,直线拟合得更好。',
+          },
+          {
+            type: 'code',
+            caption: '示例:对比两组参数的手算 MSE',
+            text: `import numpy as np
+
+hours = np.array([1.0, 2.0, 3.0, 5.0])
+scores = np.array([52, 63, 76, 91])
+
+# 方案一:weight=10, bias=43
+w1, b1 = 10, 43
+pred1 = w1 * hours + b1
+mse1 = ((scores - pred1) ** 2).mean()
+
+# 方案二:weight=8, bias=45
+w2, b2 = 8, 45
+pred2 = w2 * hours + b2
+mse2 = ((scores - pred2) ** 2).mean()
+
+print(f"方案一 预测:{pred1}  MSE:{mse1}")
+print(f"方案二 预测:{pred2}  MSE:{mse2}")`,
+          },
+          {
+            type: 'output',
+            text: `方案一 预测:[53. 63. 73. 93.]  MSE:3.5
+方案二 预测:[53. 61. 69. 85.]  MSE:22.5`,
+          },
+          {
+            type: 'paragraph',
+            text: '方案一的 MSE 只有 3.5,远小于方案二的 22.5,说明方案一的直线更贴合数据。代价函数就是这样一台"打分器":给一组 w、b,它输出一个误差值,数值越小越好——训练的目标就是找到让 MSE 最小的那组参数。',
           },
           {
             type: 'summary',
