@@ -789,19 +789,19 @@ for degree in [1, 2, 3, 5, 9]:
           },
           {
             type: 'output',
-            text: `次数 1:训练 MSE 12.80,测试 MSE 11.94
-次数 2:训练 MSE  2.31,测试 MSE  3.55
-次数 3:训练 MSE  0.85,测试 MSE  1.92
-次数 5:训练 MSE  0.02,测试 MSE  3.71
-次数 9:训练 MSE  0.00,测试 MSE 45.30`,
+            text: `次数 1:训练 MSE 4.13,测试 MSE 4.33
+次数 2:训练 MSE 4.10,测试 MSE 4.31
+次数 3:训练 MSE 4.09,测试 MSE 4.46
+次数 5:训练 MSE 3.95,测试 MSE 4.62
+次数 9:训练 MSE 0.00,测试 MSE 44.00`,
           },
           {
             type: 'paragraph',
-            text: '图表说明:观察一个规律——次数从 1 加到 5,训练 MSE 一路下降,曲线越来越贴合训练点;但测试 MSE 在次数 3 之后开始反弹,次数 9 时训练误差几乎为 0、测试误差却爆炸。曲线"背下"了训练数据,却没学到规律,这就是过拟合。',
+            text: '图表说明:观察一个规律——次数从 1 加到 5,训练 MSE 缓慢下降(4.13 → 3.95),测试 MSE 却基本不动甚至略升(4.33 → 4.62);次数到 9 时,训练 MSE 直接变成 0,测试 MSE 爆炸到 44。曲线把训练数据"背"得一字不差,却在新数据上彻底失败,这就是过拟合。',
           },
           {
             type: 'note',
-            text: '上面的数值是示意,实际结果会随数据与 random_state 变化;趋势(高次过拟合)是一致的。',
+            text: '上面数字对应 train_test_split(random_state=1) 的固定划分;换成别的 random_state 具体数值会变,但"次数过高 → 训练误差趋零、测试误差爆炸"的趋势一致。',
           },
           {
             type: 'commonMistakes',
@@ -936,6 +936,115 @@ for degree in [1, 2, 3, 5, 9]:
         ],
       },
       {
+        id: 'train-first-model',
+        title: '训练第一个逻辑回归模型',
+        intro: '亲手跑通逻辑回归的完整流程:训练、预测、看概率。',
+        sections: [
+          {
+            type: 'objectives',
+            items: [
+              '会用 LogisticRegression 训练一个二分类模型',
+              '分清 predict() 与 predict_proba() 的区别',
+              '会用训练好的模型预测新样本',
+            ],
+          },
+          {
+            type: 'paragraph',
+            text: '逻辑回归在 sklearn 里的用法和线性回归几乎一样:建模型 → fit() 训练 → predict() 预测。区别在于,predict() 返回的是 0/1 类别,而 predict_proba() 返回的是"属于每个类别的概率"。',
+          },
+          {
+            type: 'code',
+            caption: '示例:训练逻辑回归模型,预测"是否通过"',
+            text: `import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix
+
+# 特征:第一列学习时间,第二列完成测试次数;标签:0 未通过,1 通过
+X = np.array([
+    [0.5, 0], [1.0, 0], [1.0, 1], [1.5, 0],
+    [1.5, 1], [2.0, 0], [2.0, 1], [2.5, 1],
+    [2.5, 2], [3.0, 1], [3.0, 2], [3.5, 1],
+    [3.5, 2], [4.0, 2], [4.0, 3], [4.5, 2],
+    [4.5, 3], [5.0, 3], [5.5, 3], [6.0, 4],
+])
+print(X.shape)
+
+y = np.array([0, 0, 0, 0, 0, 0, 0, 1, 0, 1,
+              1, 0, 1, 1, 1, 1, 1, 1, 1, 1])
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=1, stratify=y
+)
+
+model = LogisticRegression()
+model.fit(X_train, y_train)
+
+predictions = model.predict(X_test)
+probability = model.predict_proba(X_test)[:, 1]
+
+print('测试特征:')
+print(X_test)
+print('真实类别:', y_test)
+print('预测类别:', predictions)
+print('通过概率:')
+print(np.round(probability, 2))
+
+accuracy = accuracy_score(y_test, predictions)
+matrix = confusion_matrix(y_test, predictions)
+
+print(f'准确率: {accuracy:.2f}')
+print('混淆矩阵:')
+print(matrix)
+
+# 预测一个新学生:学习 2.8 小时、完成 1 次测试
+new_student = np.array([[2.8, 1]])
+new_prediction = model.predict(new_student)[0]
+new_probability = model.predict_proba(new_student)[0, 1]
+
+print('预测类型:', new_prediction)
+print(f'通过概率: {new_probability:.2%}')`,
+          },
+          {
+            type: 'output',
+            text: `(20, 2)
+测试特征:
+[[3.  1. ]
+ [2.  0. ]
+ [1.5 1. ]
+ [6.  4. ]
+ [2.5 1. ]
+ [1.5 0. ]]
+真实类别: [1 0 0 1 1 0]
+预测类别: [0 0 0 1 0 0]
+通过概率:
+[0.35 0.07 0.1  1.   0.24 0.04]
+准确率: 0.67
+混淆矩阵:
+[[3 0]
+ [2 1]]
+预测类型: 0
+通过概率: 30.62%`,
+          },
+          {
+            type: 'paragraph',
+            text: '这套划分里 6 个测试样本对了 4 个,准确率 0.67。混淆矩阵 [[3 0],[2 1]] 的意思是:3 个"未通过"全部判对;3 个"通过"里只找回 1 个,漏了 2 个。',
+          },
+          {
+            type: 'paragraph',
+            text: '最后预测新学生(学习 2.8 小时、完成 1 次测试):通过概率只有 30.62%,低于默认阈值 0.5,所以模型判他"未通过"(预测类型 0)。',
+          },
+          {
+            type: 'note',
+            text: 'predict() 返回 0/1 类别,predict_proba() 返回每个样本属于各类的概率;[:, 1] 取第二列,就是"正类(通过)"的概率。predict() 内部其实也是拿这个概率和阈值(默认 0.5)比较后切出来的类别。',
+          },
+          {
+            type: 'summary',
+            text: '训练逻辑回归:LogisticRegression() 建模型 → fit() 训练 → predict() 出类别、predict_proba() 出概率,再用概率按阈值切成类别。',
+          },
+        ],
+      },
+      {
         id: 'sigmoid',
         title: 'Sigmoid 函数',
         intro: '认识那个把任意实数"压"进 0~1 的 S 形函数。',
@@ -1063,21 +1172,21 @@ print(f"F1: {f1_score(y_test, pred_025):.2%}")`,
           {
             type: 'output',
             text: `真实类别: [1 0 0 1 1 0]
-预测类别(阈值 0.25): [1 1 0 1 1 1]
+预测类别(阈值 0.25): [1 0 0 1 0 0]
 混淆矩阵(阈值 0.25):
-[[1 2]
- [0 3]]
-精确率: 60.00%
-召回率: 100.00%
-F1: 75.00%`,
+[[3 0]
+ [1 2]]
+精确率: 100.00%
+召回率: 66.67%
+F1: 80.00%`,
           },
           {
             type: 'paragraph',
-            text: '如果沿用默认的 0.5 阈值,这套数据划分的精确率和召回率都是 67%;阈值降到 0.25 后,召回率冲到 100%——所有真正通过的人都被找到了,但精确率掉到 60%,把两个没通过的人也误判成了通过。',
+            text: '沿用默认 0.5 阈值时,这套数据划分的召回率只有 33.33%——3 个真正通过的人里只找回 1 个;阈值降到 0.25 后,召回率升到 66.67%,多找回了概率 0.35 的那个正样本,而精确率仍是 100%(预测为"通过"的 2 人都对了)。想再找回概率 0.24 的最后一个正样本,就得把阈值继续降到 0.24 以下,那时才会出现误报、精确率下降。',
           },
           {
             type: 'note',
-            text: '以上是示意输出,具体数字随随机划分变化;重点是看懂"调阈值 → 精确率与召回率此消彼长"这个规律。',
+            text: '上面数字对应 train_test_split(random_state=1) 的固定划分。这个例子里阈值从 0.5 降到 0.25,召回率上升、精确率没变;再往下调才会出现误报——"阈值越低召回率越高、精确率越低"是一般趋势,具体在哪一步开始下降要看数据。',
           },
           {
             type: 'commonMistakes',
@@ -1256,15 +1365,18 @@ F1: 75.00%`,
           },
           {
             type: 'paragraph',
-            text: '把树的深度 max_depth 从 1 一路加大,训练准确率会越来越高,但测试准确率往往先升后降——这就是过拟合最直观的证据:树太深,就开始"背答案"而不是找规律。',
+            text: '把树的深度 max_depth 从 1 一路加大,训练准确率会一路升到 100%,测试准确率反而掉下去——这就是过拟合最直观的证据:树太深,就开始"背答案"而不是找规律。',
           },
           {
             type: 'code',
-            caption: '示例:对比不同深度,并输出规则与特征重要性',
+            caption: '示例:对比不同深度,输出完整指标、规则与特征重要性',
             text: `import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier, export_text
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import (
+    accuracy_score, precision_score, recall_score,
+    f1_score, confusion_matrix,
+)
 
 # 特征:第一列学习时间,第二列完成测试次数;标签:0 未通过,1 通过
 X = np.array([
@@ -1281,15 +1393,20 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.3, random_state=1, stratify=y
 )
 
-# 依次试 1 / 2 / 3 层深度,对比训练与测试准确率
+# 依次试 1 / 2 / 3 层深度,每个深度都看完整评估指标
 for depth in [1, 2, 3]:
     model = DecisionTreeClassifier(max_depth=depth, random_state=42)
     model.fit(X_train, y_train)
-    train_acc = accuracy_score(y_train, model.predict(X_train))
-    test_acc = accuracy_score(y_test, model.predict(X_test))
-    print(f"max_depth={depth}  训练准确率 {train_acc:.2%}  测试准确率 {test_acc:.2%}")
+    pred = model.predict(X_test)
+    print(f"max_depth={depth}")
+    print("预测类别:", pred)
+    print(f"准确率 {accuracy_score(y_test, pred):.2%}  精确率 {precision_score(y_test, pred):.2%}  召回率 {recall_score(y_test, pred):.2%}  F1 {f1_score(y_test, pred):.2%}")
+    print("混淆矩阵:")
+    print(confusion_matrix(y_test, pred))
+    print(f"训练准确率 {accuracy_score(y_train, model.predict(X_train)):.2%}  测试准确率 {accuracy_score(y_test, pred):.2%}")
+    print()
 
-# 把最后一棵树转成可读规则
+# 把最后一棵树(深度 3)转成可读规则
 rules = export_text(model, feature_names=['hours', 'practice'])
 print("决策规则:")
 print(rules)
@@ -1299,28 +1416,48 @@ print("特征重要性:", model.feature_importances_)`,
           },
           {
             type: 'output',
-            text: `max_depth=1  训练准确率 70.00%  测试准确率 66.67%
-max_depth=2  训练准确率 85.71%  测试准确率 83.33%
-max_depth=3  训练准确率 100.00%  测试准确率 66.67%
+            text: `max_depth=1
+预测类别: [1 0 0 1 0 0]
+准确率 83.33%  精确率 100.00%  召回率 66.67%  F1 80.00%
+混淆矩阵:
+[[3 0]
+ [1 2]]
+训练准确率 92.86%  测试准确率 83.33%
+
+max_depth=2
+预测类别: [0 0 0 1 0 0]
+准确率 66.67%  精确率 100.00%  召回率 33.33%  F1 50.00%
+混淆矩阵:
+[[3 0]
+ [2 1]]
+训练准确率 100.00%  测试准确率 66.67%
+
+max_depth=3
+预测类别: [0 0 0 1 0 0]
+准确率 66.67%  精确率 100.00%  召回率 33.33%  F1 50.00%
+混淆矩阵:
+[[3 0]
+ [2 1]]
+训练准确率 100.00%  测试准确率 66.67%
 
 决策规则:
-|--- hours <= 2.50
+|--- hours <= 2.75
 |   |--- class: 0
-|--- hours >  2.50
-|   |--- hours <= 3.75
+|--- hours >  2.75
+|   |--- practice <= 1.50
 |   |   |--- class: 0
-|   |--- hours >  3.75
+|   |--- practice >  1.50
 |   |   |--- class: 1
 
-特征重要性: [0.7 0.3]`,
+特征重要性: [0.74 0.26]`,
           },
           {
             type: 'paragraph',
-            text: '可以看到,深度到 3 时训练准确率已经 100%,但测试准确率反而掉回 66.67%——树在训练集上"背"得太死。特征重要性 [0.7, 0.3] 说明"学习时间"比"完成测试次数"对判断帮助更大。',
+            text: '可以看到,深度 1 的测试准确率最高(83.33%),再加深时训练准确率冲到 100%、测试准确率反而掉到 66.67%——树开始"背答案"。注意深度 2、3 的精确率仍是 100%(预测为"通过"的基本都对),但召回率掉到 33.33%,很多真正通过的人被漏掉了。特征重要性 [0.74, 0.26] 说明"学习时间"比"完成测试次数"对判断帮助更大。',
           },
           {
             type: 'note',
-            text: '以上是示意输出,具体数字与规则随随机划分变化;重点关注深度、准确率、规则三者之间的关系。',
+            text: '上面数字对应 train_test_split(random_state=1) 与 DecisionTreeClassifier(random_state=42) 的固定划分;换成别的 random_state 具体数值会变,但"加深 → 训练更准、测试变差"的趋势不变。',
           },
           {
             type: 'commonMistakes',
@@ -1332,7 +1469,7 @@ max_depth=3  训练准确率 100.00%  测试准确率 66.67%
           },
           {
             type: 'summary',
-            text: 'export_text 把决策树转成可读规则;扫描 max_depth 能直观看到过拟合;feature_importances_ 给出每个特征对预测的贡献大小。',
+            text: 'export_text 把决策树转成可读规则;扫描 max_depth 并同时看准确率、精确率、召回率、F1 与混淆矩阵,能完整看出过拟合;feature_importances_ 给出每个特征对预测的贡献大小。',
           },
         ],
       },
@@ -1490,15 +1627,15 @@ print(f"R²:{r2:.2f}")`,
           },
           {
             type: 'output',
-            text: `测试集真实成绩: [80 50 74]
-测试集预测成绩: [82.34 48.12 75.89]
-MSE:5.62
-MAE:2.20
-R²:0.95`,
+            text: `测试集真实成绩: [61 94 80]
+测试集预测成绩: [60.2  93.99 79.51]
+MSE:0.29
+MAE:0.43
+R²:1.00`,
           },
           {
             type: 'note',
-            text: '上面是一份示意输出,具体数字会随 random_state 和划分比例变化;关注的重点是三个指标各自的含义。',
+            text: '上面数字对应 train_test_split(random_state=1) 的固定划分。这份"学习时间 → 成绩"的数据几乎完美线性,所以 R² 非常接近 1(约 0.998);换成别的 random_state 具体数值会变,但三个指标的含义不变。',
           },
           {
             type: 'commonMistakes',
@@ -1572,32 +1709,32 @@ pred = model.predict(X_test)
 
 print("真实类别:", y_test)
 print("预测类别:", pred)
-print("准确率:", accuracy_score(y_test, pred))
-print("精确率:", precision_score(y_test, pred))
-print("召回率:", recall_score(y_test, pred))
-print("F1:", f1_score(y_test, pred))
+print(f"准确率: {accuracy_score(y_test, pred):.2%}")
+print(f"精确率: {precision_score(y_test, pred):.2%}")
+print(f"召回率: {recall_score(y_test, pred):.2%}")
+print(f"F1: {f1_score(y_test, pred):.2%}")
 print("混淆矩阵:")
 print(confusion_matrix(y_test, pred))`,
           },
           {
             type: 'output',
             text: `真实类别: [1 0 0 1 1 0]
-预测类别: [1 0 0 0 1 1]
-准确率: 0.67
-精确率: 0.67
-召回率: 0.67
-F1: 0.67
+预测类别: [0 0 0 1 0 0]
+准确率: 66.67%
+精确率: 100.00%
+召回率: 33.33%
+F1: 50.00%
 混淆矩阵:
-[[2 1]
- [1 2]]`,
+[[3 0]
+ [2 1]]`,
           },
           {
             type: 'paragraph',
-            text: '混淆矩阵按"行=真实类别、列=预测类别"排列。上面 2×2 的矩阵里:左上角是"真实不通过且预测不通过"(2 人),右上角是"真实不通过却预测通过"(1 人,误报),左下角是"真实通过却预测不通过"(1 人,漏报),右下角是"真实通过且预测通过"(2 人)。',
+            text: '混淆矩阵按"行=真实类别、列=预测类别"排列。上面矩阵里:左上角 3 是"真实不通过且预测不通过",右上角 0 是"真实不通过却预测通过"(误报),左下角 2 是"真实通过却预测不通过"(漏报),右下角 1 是"真实通过且预测通过"。所以精确率 = 1/(1+0) = 100%(预测"通过"的 1 人都对了),召回率 = 1/(1+2) ≈ 33%(真正通过的 3 人只找到 1 人)。',
           },
           {
             type: 'note',
-            text: '上面是一份示意输出,实际数字会随随机划分变化;重点看指标怎么读、矩阵怎么理解。',
+            text: '上面数字对应 train_test_split(random_state=1) 的固定划分;换成别的随机划分具体数值会变,但"精确率 = TP/(TP+FP)、召回率 = TP/(TP+FN)"的读法不变。',
           },
           {
             type: 'commonMistakes',
@@ -1666,24 +1803,24 @@ for degree in [1, 2, 3, 5, 9]:
         model, X, y, cv=kfold, scoring="neg_mean_squared_error"
     )
     mse_scores = -neg_scores
-    print(f"次数 {degree}:每折 MSE {np.round(mse_scores, 2)},"
+    print(f"次数 {degree}:每折 MSE {[round(float(m), 2) for m in mse_scores]},"
           f"平均 {mse_scores.mean():.2f}")`,
           },
           {
             type: 'output',
-            text: `次数 1:每折 MSE [15.23  9.87 12.41 11.05 13.72],平均 12.46
-次数 2:每折 MSE [ 3.11  4.52  2.98  4.03  3.77],平均  3.68
-次数 3:每折 MSE [ 1.24  1.87  1.55  1.66  1.42],平均  1.55
-次数 5:每折 MSE [ 1.05  1.38  1.21  1.29  1.11],平均  1.21
-次数 9:每折 MSE [18.54  5.62  9.31  7.28  6.14],平均  9.38`,
+            text: `次数 1:每折 MSE [4.35, 7.62, 7.01, 4.82, 4.36],平均 5.63
+次数 2:每折 MSE [4.39, 7.67, 6.5, 4.91, 4.58],平均 5.61
+次数 3:每折 MSE [4.62, 11.75, 6.97, 11.94, 4.84],平均 8.02
+次数 5:每折 MSE [6.7, 13.31, 59.89, 39.64, 12.23],平均 26.35
+次数 9:每折 MSE [47.02, 33.1, 506602.96, 4772.01, 599.98],平均 102411.02`,
           },
           {
             type: 'paragraph',
-            text: '可以看到,次数从 1 升到 5,平均 MSE 一路下降;但次数到 9 时误差反而大幅反弹——这就是过拟合:模型记住了训练数据的噪声,泛化变差。交叉验证帮我们用更可靠的方式选中"平均误差最小"的那个次数。',
+            text: '可以看到,次数 1、2 的平均 MSE 最低(约 5.6);次数升到 3、5,平均 MSE 反而上升(8.0、26.4);次数 9 直接爆炸到 10 万量级——高次多项式在交叉验证下严重过拟合。交叉验证帮我们用更可靠的方式选中平均误差最小的那个次数(这里是 1 或 2)。',
           },
           {
             type: 'note',
-            text: '上面的数值是示意,实际结果会随数据与 random_state 变化;趋势(高次过拟合)是一致的。',
+            text: '上面数字对应 KFold(n_splits=5, shuffle=True, random_state=1) 的固定划分;换成别的 random_state 具体数值会变,但"高次多项式过拟合"的趋势一致。',
           },
           {
             type: 'commonMistakes',
@@ -1843,7 +1980,7 @@ for name, model in models.items():
 # 用随机森林看特征重要性并预测新样本
 forest = RandomForestClassifier(n_estimators=100, max_depth=3, random_state=42)
 forest.fit(X, y)
-print('特征重要性:', forest.feature_importances_)
+print('特征重要性:', np.round(forest.feature_importances_, 2))
 
 new_student = np.array([[2.8, 1]])
 pred = forest.predict(new_student)
@@ -1854,23 +1991,23 @@ print(f"通过概率: {prob:.2%}")`,
           {
             type: 'output',
             text: `深度3的决策树
+每折准确率: [0.75 0.75 0.75 0.75 0.25]
+平均准确率: 65.00%  标准差: 20.00%
+随机森林
 每折准确率: [0.75 0.75 1.   0.75 1.  ]
 平均准确率: 85.00%  标准差: 12.25%
-随机森林
-每折准确率: [0.75 0.75 1.   1.   1.  ]
-平均准确率: 90.00%  标准差: 12.25%
 
-特征重要性: [0.73 0.27]
+特征重要性: [0.66 0.34]
 预测类型: [1]
-通过概率: 78.00%`,
+通过概率: 81.63%`,
           },
           {
             type: 'paragraph',
-            text: '随机森林的平均准确率略高于单棵决策树。特征重要性 [0.73, 0.27] 同样说明"学习时间"更重要;对新样本(学习 2.8 小时、测过 1 次)预测为"通过",概率 78%。',
+            text: '随机森林的平均准确率(85%)明显高于单棵决策树(65%)。特征重要性约 [0.66, 0.34] 同样说明"学习时间"更重要;对新样本(学习 2.8 小时、测过 1 次)预测为"通过",概率约 82%。',
           },
           {
             type: 'note',
-            text: '以上是示意输出,具体数字随随机划分变化;随机森林不保证一定比单棵树好——样本很少或树太少时,两者差别可能不大。',
+            text: '上面数字对应 StratifiedKFold(random_state=42) 与 RandomForestClassifier(random_state=42) 的固定划分。这个例子里随机森林明显更好(85% vs 65%),但样本很少或树太少时,森林不一定比单棵树强。',
           },
           {
             type: 'commonMistakes',
