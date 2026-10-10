@@ -77,6 +77,62 @@ function Section({ block }: { block: SectionBlock }) {
           </p>
         </div>
       )
+    case 'objectives':
+      return (
+        <div className="rounded-xl border border-sky-200 bg-sky-50 p-4">
+          <p className="text-sm font-semibold text-sky-800">🎯 学习目标</p>
+          <ul className="mt-2 space-y-1.5 text-sm text-sky-900/80">
+            {block.items.map((it, i) => (
+              <li key={i} className="flex gap-2">
+                <span aria-hidden="true" className="text-sky-500">
+                  ✓
+                </span>
+                <span className="leading-relaxed">{it}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+    case 'code':
+      return (
+        <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900">
+          {block.caption && (
+            <p className="border-b border-slate-700/60 px-4 py-2 text-xs font-medium text-slate-300">
+              {block.caption}
+            </p>
+          )}
+          <pre className="overflow-x-auto p-4 text-sm leading-relaxed text-slate-100">
+            <code className="font-mono">{block.text}</code>
+          </pre>
+        </div>
+      )
+    case 'output':
+      return (
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+          <p className="border-b border-slate-200 px-4 py-2 text-xs font-medium text-slate-500">
+            ▶ 运行结果
+          </p>
+          <pre className="overflow-x-auto p-4 text-sm leading-relaxed text-slate-700">
+            <code className="font-mono">{block.text}</code>
+          </pre>
+        </div>
+      )
+    case 'commonMistakes':
+      return (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
+          <p className="text-sm font-semibold text-rose-800">⚠️ 常见错误</p>
+          <ul className="mt-2 space-y-2 text-sm text-rose-900/80">
+            {block.items.map((it, i) => (
+              <li key={i} className="flex gap-2">
+                <span aria-hidden="true" className="text-rose-500">
+                  ✗
+                </span>
+                <span className="leading-relaxed">{it}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
     default:
       return null
   }
@@ -92,9 +148,7 @@ export default function Lesson() {
     return <NotFound message="未找到该课程小节" />
   }
 
-  const idx = course.lessons.findIndex((l) => l.id === lesson.id)
   const completed = isLessonCompleted(course.id, lesson.id)
-  const isLastLesson = idx === course.lessons.length - 1
 
   const lessonList = (
     <ul className="space-y-1">
@@ -172,12 +226,12 @@ export default function Lesson() {
             ))}
           </div>
 
-          {isLastLesson && course.demo === 'linear-regression' && (
+          {course.demo === 'linear-regression' && lesson.id === 'gradient-descent' && (
             <div className="mt-10">
               <LinearRegressionDemo />
             </div>
           )}
-          {isLastLesson && course.demo === 'kmeans' && (
+          {course.demo === 'kmeans' && lesson.id === 'choose-k' && (
             <div className="mt-10">
               <KMeansDemo />
             </div>

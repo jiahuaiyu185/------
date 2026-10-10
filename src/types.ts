@@ -7,6 +7,10 @@ export type SectionBlock =
   | { type: 'keypoints'; items: string[] }
   | { type: 'note'; text: string }
   | { type: 'summary'; text: string }
+  | { type: 'objectives'; items: string[] }
+  | { type: 'code'; caption?: string; text: string }
+  | { type: 'output'; text: string }
+  | { type: 'commonMistakes'; items: string[] }
 
 export interface Lesson {
   id: string

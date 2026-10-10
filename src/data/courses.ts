@@ -2,6 +2,427 @@ import type { Course } from '../types'
 
 export const courses: Course[] = [
   {
+    id: 'python-data',
+    title: 'Python 数据处理入门',
+    icon: '🐍',
+    tagline: '用 Python 清洗数据、画图,为机器学习准备原料',
+    description:
+      '机器学习从数据开始。掌握用纯 Python 清洗数据、用 NumPy 与 Pandas 处理表格、用 Matplotlib 画图,并理解特征 X 与标签 y。',
+    gradient: 'from-teal-500 to-emerald-600',
+    lessons: [
+      {
+        id: 'clean-data',
+        title: '用 Python 清洗数据',
+        intro: '看懂"缺失值 → 清洗 → 算统计量 → 拆出特征与标签"的完整流程。',
+        sections: [
+          {
+            type: 'objectives',
+            items: [
+              '能识别数据中的缺失值(None)',
+              '会写循环过滤掉包含缺失值的记录',
+              '会计算平均值、最高分等统计量',
+              '理解特征 X 与标签 y 分别是什么',
+            ],
+          },
+          {
+            type: 'paragraph',
+            text: '机器学习的第一步,是准备干净的数据。真实数据常常有缺失、有错误,所以要先"清洗"。即使只用 Python 自带的列表和字典,也能完成这项工作:把每一条数据当成一个字典,遍历、过滤、统计。',
+          },
+          {
+            type: 'example',
+            title: '一份带缺失值的数据',
+            text: '下面这份"学习时间 → 成绩"的数据里,有两条不完整:小刚没记录学习时间,小王没记录成绩。清洗的目标就是去掉这些不完整的记录,只保留 hours 和 score 都有的数据。',
+          },
+          {
+            type: 'code',
+            caption: '示例:过滤缺失值并计算统计量',
+            text: `# 学习时间(hours)与成绩(score)的原始记录
+records = [
+    {"hours": 1.0, "score": 52},
+    {"hours": 2.0, "score": 63},
+    {"hours": None, "score": 70},   # 小刚:缺学习时间
+    {"hours": 3.0, "score": 76},
+    {"hours": 4.0, "score": None},  # 小王:缺成绩
+    {"hours": 5.0, "score": 91},
+]
+
+# 只保留 hours 和 score 都不为 None 的记录
+def clean_records(records):
+    cleaned = []
+    for record in records:
+        if record["hours"] is not None and record["score"] is not None:
+            cleaned.append(record)
+    return cleaned
+
+cleaned = clean_records(records)
+count = len(cleaned)
+
+if count > 0:
+    avg_hours = sum(r["hours"] for r in cleaned) / count
+    avg_score = sum(r["score"] for r in cleaned) / count
+    high_score = max(r["score"] for r in cleaned)
+
+    print(f"有效记录数:{count}")
+    print(f"平均学习时间:{avg_hours}")
+    print(f"平均成绩:{avg_score}")
+    print(f"最高成绩:{high_score}")`,
+          },
+          {
+            type: 'output',
+            text: `有效记录数:4
+平均学习时间:2.75
+平均成绩:70.5
+最高成绩:91`,
+          },
+          {
+            type: 'paragraph',
+            text: '清洗之后,再按机器学习的习惯把数据拆成"特征"和"标签":特征 X 是模型看到的输入,标签 y 是希望模型预测的答案。这里 X 是学习时间,y 是成绩。',
+          },
+          {
+            type: 'code',
+            caption: '示例:拆出特征 X 与标签 y',
+            text: `X = []  # 特征:学习时间
+y = []  # 标签:成绩
+for record in cleaned:
+    X.append([record["hours"]])
+    y.append(record["score"])
+
+print("特征 X:", X)
+print("标签 y:", y)`,
+          },
+          {
+            type: 'output',
+            text: `特征 X: [[1.0], [2.0], [3.0], [5.0]]
+标签 y: [52, 63, 76, 91]`,
+          },
+          {
+            type: 'commonMistakes',
+            items: [
+              '判断 None 时写 == None 也能运行,但更规范的写法是 is None(比较的是"是不是同一个对象")。',
+              '忘记先过滤缺失值就做 sum / max,会直接报错(TypeError)。',
+              '计算平均值时分母写错:应该除以"有效记录数",而不是"原始记录数"。',
+            ],
+          },
+          {
+            type: 'summary',
+            text: '数据清洗就是过滤掉不完整的记录;之后把输入拆成特征 X、把要预测的答案拆成标签 y,这是监督学习最基础的一步。',
+          },
+        ],
+      },
+      {
+        id: 'numpy-arrays',
+        title: 'NumPy 数组与向量化',
+        intro: '用数组一次完成整组数据的运算,理解广播、掩码与 shape。',
+        sections: [
+          {
+            type: 'objectives',
+            items: [
+              '会用 np.array 创建数组并查看它的 shape',
+              '理解"广播":对整组数据一次完成运算',
+              '会用布尔掩码筛选出满足条件的数据',
+              '理解 shape[0] 是样本数、shape[1] 是特征数',
+            ],
+          },
+          {
+            type: 'paragraph',
+            text: 'NumPy 是 Python 数值计算的基础库,机器学习几乎处处用到它。它的核心是 ndarray(多维数组):可以对整组数据一次完成运算,这种"一次算完整个数组"的方式叫向量化,比写 for 循环更简洁、也更快。',
+          },
+          {
+            type: 'example',
+            title: '列表和数组的乘法完全不同',
+            text: '[1, 2, 3] * 2 得到 [1, 2, 3, 1, 2, 3](列表被重复);而 np.array([1, 2, 3]) * 2 得到 [2, 4, 6](每个元素都乘以 2)。这是 NumPy 与普通列表最容易被忽略的区别。',
+          },
+          {
+            type: 'code',
+            caption: '示例:创建数组、广播与统计',
+            text: `import numpy as np
+
+hours = np.array([1.0, 2.0, 3.0, 5.0])
+scores = np.array([52, 63, 76, 91])
+
+print("学习时间:", hours)
+print("成绩:", scores)
+print("hours 的形状:", hours.shape)   # (4,) 表示 4 个元素
+
+# 广播:对整个数组一次完成运算
+minutes = hours * 60                 # 小时 → 分钟
+adjusted = scores + 5                # 每人加 5 分
+print("学习的分钟数:", minutes)
+print("加 5 分后:", adjusted)
+
+# 常用统计
+print("平均学习时间:", hours.mean())
+print("平均成绩:", scores.mean())
+print("最高成绩:", scores.max())
+print("最低成绩:", scores.min())`,
+          },
+          {
+            type: 'output',
+            text: `学习时间: [1. 2. 3. 5.]
+成绩: [52 63 76 91]
+hours 的形状: (4,)
+学习的分钟数: [ 60. 120. 180. 300.]
+加 5 分后: [57 68 81 96]
+平均学习时间: 2.75
+平均成绩: 70.5
+最高成绩: 91
+最低成绩: 52`,
+          },
+          {
+            type: 'code',
+            caption: '示例:布尔掩码筛选',
+            text: `# 找出成绩 ≥ 70 的记录
+mask = scores >= 70
+print("是否满足条件:", mask)        # [False False  True  True]
+print("满足条件的成绩:", scores[mask])
+print("对应的学习时间:", hours[mask])
+
+# 把特征整理成"样本数 × 特征数"的二维数组
+X = np.array([[1.0], [2.0], [3.0], [5.0]])
+print("X 的形状:", X.shape)          # (4, 1)
+print("样本数量:", X.shape[0])       # 4
+print("特征数量:", X.shape[1])       # 1`,
+          },
+          {
+            type: 'output',
+            text: `是否满足条件: [False False  True  True]
+满足条件的成绩: [76 91]
+对应的学习时间: [3. 5.]
+X 的形状: (4, 1)
+样本数量: 4
+特征数量: 1`,
+          },
+          {
+            type: 'commonMistakes',
+            items: [
+              '把列表当数组:列表的 * 2 是重复,数组的 * 2 是逐元素相乘,两者完全不同。',
+              '搞混 shape 的含义:一维数组的 shape 是 (n,),二维的 X.shape[0] 是样本数、X.shape[1] 是特征数。',
+              '用 for 循环逐个元素计算,而不是利用广播,既啰嗦又慢。',
+            ],
+          },
+          {
+            type: 'summary',
+            text: 'NumPy 的数组支持广播和布尔掩码,能一次性完成整组数据的运算与筛选;X.shape 里的两个数字分别是样本数和特征数。',
+          },
+        ],
+      },
+      {
+        id: 'pandas-table',
+        title: 'Pandas 表格处理',
+        intro: '像操作 Excel 一样处理表格:缺失值、筛选、取列。',
+        sections: [
+          {
+            type: 'objectives',
+            items: [
+              '会用 DataFrame 表示一张表',
+              '会用 isna() 查看缺失值、dropna() 删除',
+              '会按条件筛选行、按列名取列',
+              '会把数据拆成特征 X 与标签 y',
+            ],
+          },
+          {
+            type: 'paragraph',
+            text: 'Pandas 提供了 DataFrame(数据表),让处理数据像操作 Excel 一样直观:按列名取列、按条件筛行、一键处理缺失值。它和 NumPy 配合,是数据预处理最常用的工具。',
+          },
+          {
+            type: 'code',
+            caption: '示例:创建表格并处理缺失值',
+            text: `import pandas as pd
+
+data = {
+    "name": ["小明", "小红", "小刚", "小李", "小王", "小张"],
+    "hours": [1.0, 2.0, None, 3.0, 4.0, 5.0],
+    "score": [52, 63, 70, 76, None, 91],
+}
+df = pd.DataFrame(data)
+print("表格形状:", df.shape)        # (6, 3):6 行 3 列
+print("每列的数据类型:")
+print(df.dtypes)
+
+print("每列的缺失值数量:")
+print(df.isna().sum())
+
+# 删除任何一列有缺失值的整行
+cleaned = df.dropna()
+print("清理后的有效记录数:", len(cleaned))`,
+          },
+          {
+            type: 'output',
+            text: `表格形状: (6, 3)
+每列的数据类型:
+name     object
+hours    float64
+score    float64
+dtype: object
+每列的缺失值数量:
+name     0
+hours    1
+score    1
+dtype: int64
+清理后的有效记录数: 4`,
+          },
+          {
+            type: 'code',
+            caption: '示例:筛选行、取列并拆出 X / y',
+            text: `# 按条件筛选:只保留学习 ≥ 2 小时的学生
+selected = cleaned[cleaned["hours"] >= 2]
+print(selected[["name", "hours", "score"]])
+
+print("平均学习时间:", cleaned["hours"].mean())
+print("最高成绩:", cleaned["score"].max())
+
+# 特征 X 用双括号取(保持二维),标签 y 用单括号取(一维)
+X = cleaned[["hours"]]
+y = cleaned["score"]
+print("特征 X 的形状:", X.shape)   # (4, 1)`,
+          },
+          {
+            type: 'output',
+            text: `   name  hours  score
+1   小红    2.0     63
+3   小李    3.0     76
+5   小张    5.0     91
+平均学习时间: 2.75
+最高成绩: 91
+特征 X 的形状: (4, 1)`,
+          },
+          {
+            type: 'commonMistakes',
+            items: [
+              '取列时混用单双括号:df["hours"] 得到一维的 Series,df[["hours"]] 才是二维 DataFrame。特征 X 需要二维形状,要用双括号。',
+              'dropna() 会删除"任何一列"有缺失的整行;只想针对某一列时,应写成 df.dropna(subset=["score"])。',
+              '忘记清洗缺失值就做统计,虽然 Pandas 的 mean() 会自动跳过 NaN,但结果可能不是预期的,先 dropna 更稳妥。',
+            ],
+          },
+          {
+            type: 'summary',
+            text: 'Pandas 用 DataFrame 表示表格,dropna 处理缺失值、条件筛选处理行、列名取列处理列;特征 X 用双括号取成二维,标签 y 用单括号取成一维。',
+          },
+        ],
+      },
+      {
+        id: 'matplotlib-correlation',
+        title: 'Matplotlib 画图与相关性',
+        intro: '用散点图一眼看出变量关系,再用相关系数把它量化。',
+        sections: [
+          {
+            type: 'objectives',
+            items: [
+              '会用 scatter 画出散点图',
+              '会给图加上标题、坐标轴标签和网格',
+              '理解相关系数接近 1、0、-1 分别代表什么',
+              '会用 .corr() 计算相关系数',
+            ],
+          },
+          {
+            type: 'paragraph',
+            text: '画图能让我们一眼看出"特征和标签之间有没有关系"。散点图是最直观的第一步;相关系数则把"关系的强弱"量化成一个介于 -1 和 1 之间的数。',
+          },
+          {
+            type: 'code',
+            caption: '示例:画散点图并计算相关系数',
+            text: `import pandas as pd
+import matplotlib.pyplot as plt
+
+# 中文显示设置(不同系统可换用其他中文字体)
+plt.rcParams["font.sans-serif"] = ["Arial Unicode MS"]
+plt.rcParams["axes.unicode_minus"] = False
+
+data = {
+    "name": ["小明", "小红", "小刚", "小李", "小王", "小张", "小赵"],
+    "hours": [1.0, 2.0, None, 3.0, 4.0, 5.0, 4.0],
+    "score": [52, 63, 70, 76, None, 91, 60],
+}
+df = pd.DataFrame(data).dropna()
+
+plt.scatter(df["hours"], df["score"])
+plt.xlabel("学习时间(小时)")
+plt.ylabel("成绩")
+plt.title("学习时间与成绩")
+plt.grid(True)
+plt.show()
+
+# 相关系数:衡量两个变量的线性相关程度
+corr = df["hours"].corr(df["score"])
+print("学习时间与成绩的相关系数:", corr)`,
+          },
+          {
+            type: 'output',
+            text: `学习时间与成绩的相关系数: 0.77`,
+          },
+          {
+            type: 'paragraph',
+            text: '图表说明:散点图里每个点代表一名学生,横轴是学习时间、纵轴是成绩。点大致沿一条从左下到右上的斜线分布,说明学习时间越长、成绩总体越高——这就是"正相关"。个别点(如 4 小时只考 60 分)偏离了整体趋势,所以相关系数没有到 1。',
+          },
+          {
+            type: 'list',
+            items: [
+              '接近 1:强正相关,一个变大另一个通常也变大',
+              '接近 0:几乎没有线性关系',
+              '接近 -1:强负相关,一个变大另一个通常变小',
+            ],
+          },
+          {
+            type: 'commonMistakes',
+            items: [
+              '中文显示成方框:matplotlib 默认字体不支持中文,需要先设置 font.sans-serif(网页里我们用 SVG 画图,没有这个问题)。',
+              '把"相关"当成"因果":相关系数高只说明两者一起变化,不代表一个"导致"另一个。',
+              '相关系数接近 0 就下结论"没关系":它只说明没有线性关系,可能还存在曲线等非线性关系。',
+            ],
+          },
+          {
+            type: 'summary',
+            text: '散点图能直观看出变量关系,相关系数把关系量化到 [-1, 1];接近 1 正相关、接近 -1 负相关、接近 0 没有线性关系。',
+          },
+        ],
+      },
+    ],
+    quiz: [
+      {
+        id: 'python-q1',
+        question: '数据里某条记录的 hours 是 None,正确的做法是?',
+        options: [
+          '直接对所有记录求和',
+          '先过滤掉这条记录,再计算统计量',
+          '把 None 当成 0',
+          '忽略错误,继续运行',
+        ],
+        answerIndex: 1,
+        explanation:
+          '包含 None 的记录不能直接参与求和等计算,应该先过滤(或补全),再统计。',
+      },
+      {
+        id: 'python-q2',
+        question: 'np.array([1, 2, 3]) * 2 的结果是?',
+        options: ['[1, 2, 3, 1, 2, 3]', '[2, 4, 6]', '[1, 4, 9]', '报错'],
+        answerIndex: 1,
+        explanation:
+          'NumPy 数组的乘法是"广播",对每个元素分别乘以 2,得到 [2, 4, 6]。',
+      },
+      {
+        id: 'python-q3',
+        question: '想从 DataFrame 里取出一列 hours 作为二维的特征 X,应该写?',
+        options: ['df["hours"]', 'df[["hours"]]', 'df.hours', 'df[hours]'],
+        answerIndex: 1,
+        explanation:
+          '双括号 df[["hours"]] 得到二维 DataFrame;单括号得到一维 Series。特征 X 需要二维形状。',
+      },
+      {
+        id: 'python-q4',
+        question: '相关系数接近 0 表示什么?',
+        options: [
+          '两个变量几乎完全一样',
+          '两个变量几乎没有线性关系',
+          '两个变量一定互为因果',
+          '数据一定有问题',
+        ],
+        answerIndex: 1,
+        explanation:
+          '相关系数接近 0 表示两者几乎没有线性关系(但可能仍有非线性关系)。',
+      },
+    ],
+  },
+  {
     id: 'ml-basics',
     title: '机器学习基础',
     icon: '🧠',
@@ -249,6 +670,86 @@ export const courses: Course[] = [
           },
         ],
       },
+      {
+        id: 'polynomial-overfitting',
+        title: '多项式回归与过拟合',
+        intro: '直线不够用怎么办?次数越高的曲线越灵活,也越容易"背答案"。',
+        sections: [
+          {
+            type: 'objectives',
+            items: [
+              '理解多项式回归是线性回归的扩展',
+              '理解"次数越高越灵活,但容易过拟合"',
+              '会看训练误差和测试误差来判断是否过拟合',
+            ],
+          },
+          {
+            type: 'paragraph',
+            text: '现实中的数据不一定是一条直线。多项式回归在线性回归的基础上,把特征 x 扩展成 x、x²、x³……,再用线性模型去拟合,从而能画出曲线。但"更灵活"不等于"更好":次数太高时,曲线会去迎合每一个数据点,反而失去泛化能力。',
+          },
+          {
+            type: 'formula',
+            text: '特征扩展:1 个特征 x → [x, x², x³, …](degree 次)',
+          },
+          {
+            type: 'code',
+            caption: '示例:比较不同次数的训练误差与测试误差',
+            text: `import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+
+X = np.linspace(-1, 1, 15).reshape(-1, 1)
+y = np.array([44, 49, 50, 58, 57, 66, 65, 72,
+              78, 77, 86, 87, 94, 93, 101])
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=1
+)
+
+for degree in [1, 2, 3, 5, 9]:
+    poly = PolynomialFeatures(degree=degree, include_bias=False)
+    X_train_poly = poly.fit_transform(X_train)
+    X_test_poly = poly.transform(X_test)
+
+    model = LinearRegression()
+    model.fit(X_train_poly, y_train)
+
+    train_mse = mean_squared_error(y_train, model.predict(X_train_poly))
+    test_mse = mean_squared_error(y_test, model.predict(X_test_poly))
+    print(f"次数 {degree}:训练 MSE {train_mse:.2f},测试 MSE {test_mse:.2f}")`,
+          },
+          {
+            type: 'output',
+            text: `次数 1:训练 MSE 12.80,测试 MSE 11.94
+次数 2:训练 MSE  2.31,测试 MSE  3.55
+次数 3:训练 MSE  0.85,测试 MSE  1.92
+次数 5:训练 MSE  0.02,测试 MSE  3.71
+次数 9:训练 MSE  0.00,测试 MSE 45.30`,
+          },
+          {
+            type: 'paragraph',
+            text: '图表说明:观察一个规律——次数从 1 加到 5,训练 MSE 一路下降,曲线越来越贴合训练点;但测试 MSE 在次数 3 之后开始反弹,次数 9 时训练误差几乎为 0、测试误差却爆炸。曲线"背下"了训练数据,却没学到规律,这就是过拟合。',
+          },
+          {
+            type: 'note',
+            text: '上面的数值是示意,实际结果会随数据与 random_state 变化;趋势(高次过拟合)是一致的。',
+          },
+          {
+            type: 'commonMistakes',
+            items: [
+              '只看训练误差:训练误差最低的模型,往往不是测试集上最好的模型。',
+              '以为次数越高越好:次数越高越灵活,但会把噪声也拟合进去,测试误差反而上升。',
+              '忘记用同一个 transform 处理测试集:应该先用训练集 fit_transform、测试集只用 transform,否则会泄漏信息。',
+            ],
+          },
+          {
+            type: 'summary',
+            text: '多项式回归通过扩展高次特征来拟合曲线;次数过高会过拟合(训练误差极低、测试误差反弹),要用测试误差(或交叉验证)来选择合适次数。',
+          },
+        ],
+      },
     ],
     quiz: [
       {
@@ -288,6 +789,45 @@ export const courses: Course[] = [
         ],
         answerIndex: 1,
         explanation: '学习率过大时,每次迈步太大,可能反复越过最低点甚至越走越远(发散)。',
+      },
+      {
+        id: 'linear-q5',
+        question: '多项式回归的本质是?',
+        options: [
+          '用曲线替换所有数据点',
+          '把特征 x 扩展成高次项(如 x²、x³)再用线性模型拟合',
+          '把标签 y 也做平方',
+          '把数据按大小排序后拟合',
+        ],
+        answerIndex: 1,
+        explanation:
+          '多项式回归通过 PolynomialFeatures 把 x 扩展成 x、x²、x³ 等,再用线性回归拟合,从而得到曲线。',
+      },
+      {
+        id: 'linear-q6',
+        question: '随着多项式次数越来越高,通常会出现什么现象?',
+        options: [
+          '训练和测试误差都持续下降',
+          '训练误差持续下降,但测试误差先降后升(过拟合)',
+          '训练误差持续上升',
+          '测试误差恒为 0',
+        ],
+        answerIndex: 1,
+        explanation:
+          '次数越高曲线越灵活,训练误差一直降;但超过某个点后测试误差反弹,就是过拟合。',
+      },
+      {
+        id: 'linear-q7',
+        question: '判断模型是否过拟合,应该重点看什么?',
+        options: [
+          '只看训练误差',
+          '训练误差与测试误差的差距(训练很低、测试很高)',
+          '只看参数个数',
+          '只看学习率',
+        ],
+        answerIndex: 1,
+        explanation:
+          '过拟合的典型特征是训练误差很低、测试误差却明显偏高,两者差距大。',
       },
     ],
   },
@@ -543,6 +1083,330 @@ export const courses: Course[] = [
         ],
         answerIndex: 1,
         explanation: '通过剪枝、限制深度等方式控制树的复杂度,可以缓解过拟合。',
+      },
+    ],
+  },
+  {
+    id: 'model-evaluation',
+    title: '模型评估与选择',
+    icon: '📊',
+    tagline: '怎么判断模型好坏?用指标和交叉验证来评价与选择模型',
+    description:
+      '训练出模型只是第一步。用 MSE、MAE、R² 评估回归,用准确率、精确率、召回率、F1 评估分类,再用交叉验证更可靠地选择模型。',
+    gradient: 'from-orange-500 to-rose-500',
+    lessons: [
+      {
+        id: 'regression-metrics',
+        title: '回归指标 MSE / MAE / R²',
+        intro: '回归预测连续数值,用三个指标从不同角度衡量预测误差。',
+        sections: [
+          {
+            type: 'objectives',
+            items: [
+              '区分 MSE、MAE、R² 各自衡量什么',
+              '会在测试集上计算这三个指标',
+              '理解 R² 越接近 1,模型解释得越好',
+            ],
+          },
+          {
+            type: 'paragraph',
+            text: '回归预测的是连续数值(比如成绩、房价)。判断预测准不准,最常用三个指标:均方误差 MSE、平均绝对误差 MAE、决定系数 R²。它们从不同角度衡量"预测值离真实值有多远"。',
+          },
+          {
+            type: 'formula',
+            text: 'MSE = (1/n)·Σ(y − ŷ)²     MAE = (1/n)·Σ|y − ŷ|     R² = 1 − Σ(y − ŷ)² / Σ(y − ȳ)²',
+          },
+          {
+            type: 'paragraph',
+            text: 'MSE 把误差平方后再平均,对"特别大的误差"惩罚最重;MAE 是误差绝对值的平均,和原始数据同单位、更好理解;R² 表示模型解释了目标多少比例的变化——1 表示完美,0 表示和"直接预测平均值"一样差。',
+          },
+          {
+            type: 'code',
+            caption: '示例:训练线性回归并在测试集上评估',
+            text: `import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+
+# 特征 X:学习时间(小时)
+X = np.array([[1.0], [1.5], [2.0], [2.5], [3.0],
+              [3.5], [4.0], [4.5], [5.0], [5.5]])
+# 标签 y:成绩
+y = np.array([50, 55, 61, 65, 72, 74, 80, 85, 88, 94])
+
+# 拆成训练集(70%)和测试集(30%),random_state 让结果可复现
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=1
+)
+
+model = LinearRegression()
+model.fit(X_train, y_train)              # 训练
+pred = model.predict(X_test)             # 在测试集上预测
+
+print("测试集真实成绩:", y_test)
+print("测试集预测成绩:", np.round(pred, 2))
+
+mse = mean_squared_error(y_test, pred)
+mae = mean_absolute_error(y_test, pred)
+r2 = r2_score(y_test, pred)
+print(f"MSE:{mse:.2f}")
+print(f"MAE:{mae:.2f}")
+print(f"R²:{r2:.2f}")`,
+          },
+          {
+            type: 'output',
+            text: `测试集真实成绩: [80 50 74]
+测试集预测成绩: [82.34 48.12 75.89]
+MSE:5.62
+MAE:2.20
+R²:0.95`,
+          },
+          {
+            type: 'note',
+            text: '上面是一份示意输出,具体数字会随 random_state 和划分比例变化;关注的重点是三个指标各自的含义。',
+          },
+          {
+            type: 'commonMistakes',
+            items: [
+              '在训练集上评估,而不是测试集:训练集上误差总是偏小,不能反映泛化能力。',
+              '把 MSE 和 MAE 搞混:MSE 对误差平方、大误差惩罚更重;MAE 与目标同单位、更直观。',
+              '以为 R² 越大越好且永不超 1:R² 最大是 1;如果模型很差,甚至可能是负数(比"直接预测平均值"还差)。',
+            ],
+          },
+          {
+            type: 'summary',
+            text: 'MSE 平方放大误差、MAE 更直观、R² 衡量解释比例;三者都要在测试集上计算,才能客观评价回归模型。',
+          },
+        ],
+      },
+      {
+        id: 'classification-metrics',
+        title: '分类指标 准确率 / 精确率 / 召回率 / F1',
+        intro: '数据不平衡时,准确率会骗人;用精确率、召回率、F1 看得更清楚。',
+        sections: [
+          {
+            type: 'objectives',
+            items: [
+              '理解准确率、精确率、召回率、F1 的含义',
+              '会读混淆矩阵',
+              '知道在什么场景下该重点看精确率还是召回率',
+            ],
+          },
+          {
+            type: 'paragraph',
+            text: '分类任务(比如判断学生"是否通过")的评价指标更丰富。如果数据不平衡——例如绝大多数人都不通过——只看准确率会骗人:模型哪怕把所有样本都预测成"不通过",准确率也很高。',
+          },
+          {
+            type: 'paragraph',
+            text: '精确率回答"被预测为通过的人里,有多少真的通过";召回率回答"真正通过的人里,模型找到了多少";F1 是两者的调和平均,用来综合评价。',
+          },
+          {
+            type: 'formula',
+            text: '精确率 P = TP / (TP + FP)    召回率 R = TP / (TP + FN)    F1 = 2·P·R / (P + R)',
+          },
+          {
+            type: 'code',
+            caption: '示例:计算分类指标与混淆矩阵',
+            text: `import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    accuracy_score, confusion_matrix,
+    precision_score, recall_score, f1_score,
+)
+
+# 特征:第一列学习时间,第二列完成测试次数;标签:0 未通过,1 通过
+X = np.array([
+    [0.5, 0], [1.0, 0], [1.0, 1], [1.5, 0],
+    [1.5, 1], [2.0, 0], [2.0, 1], [2.5, 1],
+    [2.5, 2], [3.0, 1], [3.0, 2], [3.5, 1],
+    [3.5, 2], [4.0, 2], [4.0, 3], [4.5, 2],
+    [4.5, 3], [5.0, 3], [5.5, 3], [6.0, 4],
+])
+y = np.array([0, 0, 0, 0, 0, 0, 0, 1, 0, 1,
+              1, 0, 1, 1, 1, 1, 1, 1, 1, 1])
+
+# stratify=y 保证训练/测试里"通过/不通过"比例一致
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=1, stratify=y
+)
+
+model = LogisticRegression()
+model.fit(X_train, y_train)
+pred = model.predict(X_test)
+
+print("真实类别:", y_test)
+print("预测类别:", pred)
+print("准确率:", accuracy_score(y_test, pred))
+print("精确率:", precision_score(y_test, pred))
+print("召回率:", recall_score(y_test, pred))
+print("F1:", f1_score(y_test, pred))
+print("混淆矩阵:")
+print(confusion_matrix(y_test, pred))`,
+          },
+          {
+            type: 'output',
+            text: `真实类别: [1 0 0 1 1 0]
+预测类别: [1 0 0 0 1 1]
+准确率: 0.67
+精确率: 0.67
+召回率: 0.67
+F1: 0.67
+混淆矩阵:
+[[2 1]
+ [1 2]]`,
+          },
+          {
+            type: 'paragraph',
+            text: '混淆矩阵按"行=真实类别、列=预测类别"排列。上面 2×2 的矩阵里:左上角是"真实不通过且预测不通过"(2 人),右上角是"真实不通过却预测通过"(1 人,误报),左下角是"真实通过却预测不通过"(1 人,漏报),右下角是"真实通过且预测通过"(2 人)。',
+          },
+          {
+            type: 'note',
+            text: '上面是一份示意输出,实际数字会随随机划分变化;重点看指标怎么读、矩阵怎么理解。',
+          },
+          {
+            type: 'commonMistakes',
+            items: [
+              '混淆矩阵读反:行是真实、列是预测(不同库可能反过来),读错方向会得到颠倒的精确率和召回率。',
+              '数据不平衡时只看准确率:哪怕全预测成多数类,准确率也可能很高。',
+              '混淆精确率和召回率:精确率看"预测为正里有多少对",召回率看"真正为正里找到多少"。',
+            ],
+          },
+          {
+            type: 'summary',
+            text: '准确率在数据不平衡时会失真;精确率关注"预测的准确性"、召回率关注"有没有漏掉",F1 是两者的平衡;混淆矩阵是理解它们的关键。',
+          },
+        ],
+      },
+      {
+        id: 'cross-validation',
+        title: '交叉验证与模型选择',
+        intro: '把"一次划分"变成"K 次轮流验证取平均",估计更稳定。',
+        sections: [
+          {
+            type: 'objectives',
+            items: [
+              '理解 K 折交叉验证的做法',
+              '理解它为什么比单次划分更可靠',
+              '会用交叉验证来选择模型或超参数',
+            ],
+          },
+          {
+            type: 'paragraph',
+            text: '只把数据随机分成一次训练/测试,结果会受"这次怎么切"的影响,换一次切法分数可能差很多。K 折交叉验证把数据切成 K 份,轮流拿 1 份当验证集、其余当训练集,最后对 K 次分数取平均,结果更稳定、更可信。',
+          },
+          {
+            type: 'list',
+            ordered: true,
+            items: [
+              '把数据(随机打乱后)分成 K 份',
+              '轮流用其中 1 份做验证集,其余 K-1 份做训练集',
+              '训练并打分,共得到 K 个分数',
+              '对 K 个分数取平均,作为对模型表现的估计',
+            ],
+          },
+          {
+            type: 'code',
+            caption: '示例:用交叉验证选择多项式次数',
+            text: `import numpy as np
+from sklearn.model_selection import KFold, cross_val_score
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import make_pipeline
+
+X = np.linspace(-1, 1, 15).reshape(-1, 1)
+y = np.array([44, 49, 50, 58, 57, 66, 65, 72,
+              78, 77, 86, 87, 94, 93, 101])
+
+# 5 折:随机打乱后分成 5 份,轮流验证
+kfold = KFold(n_splits=5, shuffle=True, random_state=1)
+
+for degree in [1, 2, 3, 5, 9]:
+    model = make_pipeline(
+        PolynomialFeatures(degree=degree, include_bias=False),
+        LinearRegression(),
+    )
+    # sklearn 对 MSE 返回负值,取负号后才是均方误差
+    neg_scores = cross_val_score(
+        model, X, y, cv=kfold, scoring="neg_mean_squared_error"
+    )
+    mse_scores = -neg_scores
+    print(f"次数 {degree}:每折 MSE {np.round(mse_scores, 2)},"
+          f"平均 {mse_scores.mean():.2f}")`,
+          },
+          {
+            type: 'output',
+            text: `次数 1:每折 MSE [15.23  9.87 12.41 11.05 13.72],平均 12.46
+次数 2:每折 MSE [ 3.11  4.52  2.98  4.03  3.77],平均  3.68
+次数 3:每折 MSE [ 1.24  1.87  1.55  1.66  1.42],平均  1.55
+次数 5:每折 MSE [ 1.05  1.38  1.21  1.29  1.11],平均  1.21
+次数 9:每折 MSE [18.54  5.62  9.31  7.28  6.14],平均  9.38`,
+          },
+          {
+            type: 'paragraph',
+            text: '可以看到,次数从 1 升到 5,平均 MSE 一路下降;但次数到 9 时误差反而大幅反弹——这就是过拟合:模型记住了训练数据的噪声,泛化变差。交叉验证帮我们用更可靠的方式选中"平均误差最小"的那个次数。',
+          },
+          {
+            type: 'note',
+            text: '上面的数值是示意,实际结果会随数据与 random_state 变化;趋势(高次过拟合)是一致的。',
+          },
+          {
+            type: 'commonMistakes',
+            items: [
+              '忘记打乱:用 KFold 做验证时最好 shuffle=True;分类任务则用 StratifiedKFold 保持每类比例。',
+              '正负号搞混:sklearn 的 scoring="neg_mean_squared_error" 返回负值,要取负号才是真正的 MSE。',
+              '用交叉验证"选完模型"后,又在同一个数据上报告成绩,导致信息泄漏、分数虚高。',
+            ],
+          },
+          {
+            type: 'summary',
+            text: '交叉验证把"一次划分"变成"K 次轮流验证取平均",估计更稳定;它是选择模型和超参数(如多项式次数)的可靠方法。',
+          },
+        ],
+      },
+    ],
+    quiz: [
+      {
+        id: 'eval-q1',
+        question: '下列哪个指标对"特别大的误差"惩罚最重?',
+        options: ['MAE', 'MSE', 'R²', '准确率'],
+        answerIndex: 1,
+        explanation:
+          'MSE 把误差平方,大误差被放大,所以对大误差惩罚最重;MAE 只取绝对值。',
+      },
+      {
+        id: 'eval-q2',
+        question: 'R² 越接近下面哪个值,说明回归模型越好?',
+        options: ['-1', '0', '1', '0.5'],
+        answerIndex: 2,
+        explanation:
+          'R² 最大为 1,越接近 1 说明模型解释的目标变化比例越高、拟合越好。',
+      },
+      {
+        id: 'eval-q3',
+        question: '在"预测学生是否通过"的任务中,精确率衡量的是?',
+        options: [
+          '所有学生里真正通过的比例',
+          '被预测为通过的人里,真正通过的比例',
+          '真正通过的人里,被模型找到的比例',
+          '预测为不通过的人里,真的不通过的比例',
+        ],
+        answerIndex: 1,
+        explanation:
+          '精确率 = 被预测为通过的人里真正通过的比例;召回率才是"真正通过的人里被找到的比例"。',
+      },
+      {
+        id: 'eval-q4',
+        question: 'K 折交叉验证最主要的目的是?',
+        options: [
+          '让训练速度更快',
+          '更稳定地估计模型在新数据上的表现',
+          '减少数据量',
+          '增加模型参数',
+        ],
+        answerIndex: 1,
+        explanation:
+          '交叉验证通过多次轮流验证取平均,减少单次随机划分带来的偶然性,估计更可靠。',
       },
     ],
   },
